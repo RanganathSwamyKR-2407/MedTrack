@@ -493,6 +493,15 @@ function findBestHospital(requirement = "") {
 }
 
 
+hospitals.forEach(hospital => {
+    hospital.lat = hospital.latitude;
+    hospital.lng = hospital.longitude;
+    hospital.icu = hospital.beds.icu;
+    hospital.ambulance = hospital.ambulances;
+    hospital.specialties = hospital.specialists;
+});
+
+
 // ============================================
 // MAKE FUNCTIONS AVAILABLE GLOBALLY
 // ============================================
