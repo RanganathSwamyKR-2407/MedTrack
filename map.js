@@ -77,8 +77,8 @@ function showAllHospitals() {
 
         const marker =
             L.marker([
-                hospital.lat,
-                hospital.lng
+                hospital.latitude,
+                hospital.longitude
             ]).addTo(map);
 
 
@@ -104,17 +104,17 @@ function showAllHospitals() {
 
                 <p>
                     🛏️ ICU:
-                    ${hospital.icu} beds
+                        ${hospital.beds.icu} beds
                 </p>
 
                 <p>
                     🏥 General Beds:
-                    ${hospital.beds}
+                        ${hospital.beds.general}
                 </p>
 
                 <p>
                     🚑 Ambulances:
-                    ${hospital.ambulance}
+                        ${hospital.ambulances}
                 </p>
 
             </div>
@@ -241,6 +241,58 @@ function detectUserLocation() {
 
 
 // ==========================================
+// FIND NEAREST HOSPITALS
+// ==========================================
+
+function findNearestHospitals(
+    latitude,
+    longitude,
+    limit
+) {
+
+    const earthRadiusKm = 6371;
+
+    const toRadians = degrees =>
+        degrees * Math.PI / 180;
+
+    return hospitals
+        .map(hospital => {
+            const latitudeDifference =
+                toRadians(hospital.latitude - latitude);
+
+            const longitudeDifference =
+                toRadians(hospital.longitude - longitude);
+
+            const originLatitude =
+                toRadians(latitude);
+
+            const hospitalLatitude =
+                toRadians(hospital.latitude);
+
+            const distance =
+                2 * earthRadiusKm * Math.asin(
+                    Math.sqrt(
+                        Math.sin(latitudeDifference / 2) ** 2 +
+                        Math.cos(originLatitude) *
+                        Math.cos(hospitalLatitude) *
+                        Math.sin(longitudeDifference / 2) ** 2
+                    )
+                );
+
+            return {
+                ...hospital,
+                distance
+            };
+        })
+        .sort(
+            (firstHospital, secondHospital) =>
+                firstHospital.distance - secondHospital.distance
+        )
+        .slice(0, limit);
+}
+
+
+// ==========================================
 // UPDATE HOSPITAL POPUPS WITH DISTANCE
 // ==========================================
 
@@ -304,29 +356,29 @@ function updateHospitalPopups(
 
                     <p>
                         🛏️ ICU:
-                        ${hospital.icu}
+                        ${hospital.beds.icu}
                         beds
                     </p>
 
                     <p>
                         🏥 Beds:
-                        ${hospital.beds}
+                        ${hospital.beds.general}
                     </p>
 
                     <p>
                         🚑 Ambulances:
-                        ${hospital.ambulance}
+                        ${hospital.ambulances}
                     </p>
 
                     <p>
                         ❤️
-                        ${hospital.specialties.join(", ")}
+                        ${hospital.specialists.join(", ")}
                     </p>
 
                     <button
                         onclick="openDirections(
-                            ${hospital.lat},
-                            ${hospital.lng}
+                            ${hospital.latitude},
+                            ${hospital.longitude}
                         )"
                         style="
                             width:100%;
