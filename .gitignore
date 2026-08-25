@@ -1,0 +1,31 @@
+# Environment and secret files
+.env
+.env.*
+*.env
+*.secret
+*.secrets
+secrets/
+credentials/
+
+# Local configuration and private certificates
+*.local
+*.local.*
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Dependencies and generated output
+node_modules/
+dist/
+build/
+coverage/
+.cache/
+
+# Local tooling and operating-system files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
