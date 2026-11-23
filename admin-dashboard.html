@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrator Dashboard | MedTrack</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+
+<header class="navbar">
+    <a href="index.html" class="logo">
+        <span class="logo-icon">✚</span>
+        Med<span>Track</span>
+    </a>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="hospitals.html">Hospitals</a>
+        <a href="blood.html">Blood</a>
+        <a href="admin-dashboard.html" class="active">Admin</a>
+    </nav>
+
+    <div class="nav-buttons">
+        <a href="login.html" class="login-btn">Login</a>
+    </div>
+</header>
+
+<main class="dashboard-container">
+    <section class="dashboard-header">
+        <div>
+            <span class="section-label">NETWORK GOVERNANCE</span>
+            <h1>Administrator Control Center</h1>
+            <p>Verify hospitals &amp; blood banks, monitor IoT boxes, temperature excursions, OTP access logs, and system health.</p>
+        </div>
+        <span id="systemHealthBadge" class="verified-badge">● SYSTEM HEALTHY</span>
+    </section>
+
+    <div id="adminFeedback" style="display:none;margin:18px 0;"></div>
+
+    <section id="adminHealthCards" class="dashboard-cards" style="margin:24px 0;"></section>
+
+    <div class="tab-bar" style="margin-bottom:20px;">
+        <button type="button" class="tab-btn active" onclick="switchAdminTab('facilities', this)">🏥 Facilities &amp; Verification</button>
+        <button type="button" class="tab-btn" onclick="switchAdminTab('blood', this)">🩸 Blood Overview</button>
+        <button type="button" class="tab-btn" onclick="switchAdminTab('iot', this)">📦 IoT Boxes &amp; Excursions</button>
+        <button type="button" class="tab-btn" onclick="switchAdminTab('alerts', this)">🔔 System Alerts</button>
+        <button type="button" class="tab-btn" onclick="switchAdminTab('logs', this)">🔐 Access &amp; Security Logs</button>
+        <button type="button" class="tab-btn" onclick="switchAdminTab('users', this)">👥 Users &amp; Roles</button>
+    </div>
+
+    <section id="admin-tab-facilities" class="admin-tab-panel">
+        <h2 class="dashboard-title">Registered Hospitals</h2>
+        <div id="adminHospitalsList" class="stack-list"></div>
+        <h2 class="dashboard-title">Registered Blood Banks</h2>
+        <div id="adminBloodBanksList" class="stack-list"></div>
+    </section>
+
+    <section id="admin-tab-blood" class="admin-tab-panel" style="display:none;">
+        <h2 class="dashboard-title">Network Blood Availability Summary</h2>
+        <div id="adminBloodSummary" class="dashboard-cards"></div>
+    </section>
+
+    <section id="admin-tab-iot" class="admin-tab-panel" style="display:none;">
+        <div class="panel-card" style="margin-bottom:20px;">
+            <span class="section-label">DEVICE REGISTRATION</span>
+            <h3>Register New IoT Transport Box</h3>
+            <form id="registerDeviceForm" class="grid-form" style="margin-top:12px;">
+                <div class="form-group">
+                    <label for="newDeviceUid">Device UID</label>
+                    <input type="text" id="newDeviceUid" placeholder="e.g. MT-BOX-003" required>
+                </div>
+                <div class="form-group">
+                    <label for="newDeviceName">Device Name</label>
+                    <input type="text" id="newDeviceName" placeholder="MedTrack Smart Cooler #3" required>
+                </div>
+                <div class="form-group">
+                    <label for="newDeviceModel">Controller Model</label>
+                    <input type="text" id="newDeviceModel" value="ESP32-WROOM-32" required>
+                </div>
+                <div style="display:flex;align-items:flex-end;">
+                    <button type="submit" class="primary-btn">Provision Box &amp; API Key</button>
+                </div>
+            </form>
+            <div id="newDeviceKeyBox" style="margin-top:10px;"></div>
+        </div>
+
+        <h2 class="dashboard-title">IoT Transport Boxes</h2>
+        <div id="adminDevicesList" class="stack-list"></div>
+
+        <h2 class="dashboard-title">Temperature Excursions &amp; Sensor Alerts</h2>
+        <div id="adminExcursionsList" class="stack-list"></div>
+    </section>
+
+    <section id="admin-tab-alerts" class="admin-tab-panel" style="display:none;">
+        <h2 class="dashboard-title">System, Disconnection &amp; Security Alerts</h2>
+        <div id="adminAlertsList" class="stack-list"></div>
+    </section>
+
+    <section id="admin-tab-logs" class="admin-tab-panel" style="display:none;">
+        <h2 class="dashboard-title">Smart Door Access &amp; OTP Logs</h2>
+        <div id="adminAccessLogs" class="stack-list"></div>
+
+        <h2 class="dashboard-title">System Audit Logs</h2>
+        <div id="adminAuditLogs" class="stack-list"></div>
+    </section>
+
+    <section id="admin-tab-users" class="admin-tab-panel" style="display:none;">
+        <h2 class="dashboard-title">User &amp; Role Management</h2>
+        <div class="panel-card table-scroll-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="adminUsersBody"></tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<script src="js/api-client.js"></script>
+<script src="js/admin-dashboard.js"></script>
+</body>
+
+</html>

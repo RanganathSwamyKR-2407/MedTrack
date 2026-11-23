@@ -13,6 +13,7 @@
     <title>Ambulance | MedTrack</title>
 
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="dashboard.css">
 
 </head>
 
@@ -32,8 +33,14 @@
         <a href="hospitals.html">Hospitals</a>
         <a href="emergency.html">Emergency</a>
         <a href="ambulance.html" class="active">Ambulance</a>
+        <a href="blood.html">Blood</a>
 
     </nav>
+
+    <div class="nav-buttons">
+        <a href="login.html" class="login-btn">Login</a>
+        <a href="register.html" class="primary-btn">Register</a>
+    </div>
 
 </header>
 
@@ -53,147 +60,131 @@
             </h1>
 
             <p>
-                Locate nearby emergency transport.
+                Locate verified hospitals with active ambulance units and submit a live dispatch request.
             </p>
 
         </div>
 
 
         <button
-            onclick="requestAmbulance()"
+            type="button"
+            onclick="requestAmbulance(null, 'Network Broadcast')"
             class="emergency-btn"
         >
-            🚑 Request Ambulance
+            🚑 Request Nearest Ambulance
         </button>
 
     </div>
 
-
-    <div class="ambulance-grid">
-
-        <div class="ambulance-card">
-
-            <div class="ambulance-icon">
-                🚑
+    <div class="panel-card" style="margin-bottom:20px;">
+        <div class="grid-form">
+            <div class="form-group">
+                <label for="ambCallerName">Caller / Patient Name</label>
+                <input type="text" id="ambCallerName" placeholder="Full name" value="Emergency Caller">
             </div>
-
-            <div>
-
-                <h3>
-                    Ambulance A102
-                </h3>
-
-                <p>
-                    1.8 km away
-                </p>
-
+            <div class="form-group">
+                <label for="ambCallerPhone">Callback Phone</label>
+                <input type="tel" id="ambCallerPhone" placeholder="10-digit phone or 108" value="108">
             </div>
-
-
-            <span class="status available">
-                AVAILABLE
-            </span>
-
-
-            <strong>
-                ETA: 6 min
-            </strong>
-
-
-            <button
-                onclick="requestAmbulance()"
-                class="primary-btn"
-            >
-                Request
-            </button>
-
         </div>
-
-
-        <div class="ambulance-card">
-
-            <div class="ambulance-icon">
-                🚑
-            </div>
-
-            <div>
-
-                <h3>
-                    Ambulance B205
-                </h3>
-
-                <p>
-                    3.2 km away
-                </p>
-
-            </div>
-
-
-            <span class="status available">
-                AVAILABLE
-            </span>
-
-
-            <strong>
-                ETA: 11 min
-            </strong>
-
-
-            <button
-                onclick="requestAmbulance()"
-                class="primary-btn"
-            >
-                Request
-            </button>
-
-        </div>
-
-
-        <div class="ambulance-card">
-
-            <div class="ambulance-icon">
-                🚑
-            </div>
-
-            <div>
-
-                <h3>
-                    Ambulance C301
-                </h3>
-
-                <p>
-                    5.1 km away
-                </p>
-
-            </div>
-
-
-            <span class="status busy">
-                BUSY
-            </span>
-
-
-            <strong>
-                Currently assigned
-            </strong>
-
-        </div>
-
+        <div id="ambulanceFeedback" style="display:none;margin-top:12px;"></div>
     </div>
+
+    <div id="ambulanceGrid" class="ambulance-grid"></div>
 
 </main>
 
 
+<script src="js/api-client.js"></script>
+<script src="hospitals.js"></script>
 <script>
-
-function requestAmbulance() {
-
-    alert(
-        "Demo request created. In the production version this would notify the ambulance network."
-    );
-
+function escAmb(v) {
+  return window.medtrackApi ? window.medtrackApi.escapeHtml(v) : String(v ?? "");
 }
 
+function renderAmbulanceFleet() {
+  const grid = document.getElementById("ambulanceGrid");
+  if (!grid) return;
+  const list = (window.hospitals || []).slice();
+  if (!list.length) {
+    grid.innerHTML = `<div class="panel-card"><p>No hospitals loaded.</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = list
+    .map((h) => {
+      const available = Number(h.ambulances) > 0;
+      return `
+        <div class="ambulance-card">
+          <div class="ambulance-card-lead">
+            <div class="ambulance-icon">🚑</div>
+            <div>
+              <h3>${escAmb(h.name)}</h3>
+              <p>${escAmb(h.city)}, ${escAmb(h.state)} • ${Number(h.ambulances)} unit(s)</p>
+            </div>
+          </div>
+          <div class="ambulance-card-meta">
+            <span class="status ${available ? "available" : "busy"}">${available ? "AVAILABLE" : "BUSY"}</span>
+            <strong>ETA: ${Number(h.travelTime || 12)} min</strong>
+            ${
+              available
+                ? `<button type="button" class="primary-btn js-amb-req" data-hosp-id="${Number(h.id)}" data-hosp-name="${escAmb(h.name)}">Request</button>`
+                : `<button type="button" class="small-btn" disabled>Assigned</button>`
+            }
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+
+  grid.querySelectorAll(".js-amb-req").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      requestAmbulance(Number(btn.dataset.hospId), btn.dataset.hospName);
+    });
+  });
+}
+
+async function requestAmbulance(hospitalId, hospitalLabel) {
+  const fb = document.getElementById("ambulanceFeedback");
+  const requesterName = document.getElementById("ambCallerName")?.value.trim() || "Emergency Caller";
+  const requesterPhone = document.getElementById("ambCallerPhone")?.value.trim() || "108";
+  try {
+    const res = await window.medtrackApi.request("/emergency-requests", {
+      method: "POST",
+      body: JSON.stringify({
+        requestType: "ambulance",
+        requirement: "Ambulance",
+        hospitalId: hospitalId || null,
+        requesterName,
+        requesterPhone,
+        notes: hospitalLabel ? `Requested via Ambulance portal (${hospitalLabel})` : undefined
+      })
+    });
+    const er = res.emergencyRequest;
+    fb.style.display = "block";
+    fb.className = "feedback-banner success";
+    fb.textContent = `Ambulance dispatch request ${er.request_code} created for ${hospitalLabel || "nearest hospital"} (Status: ${er.status.toUpperCase()}).`;
+  } catch (err) {
+    fb.style.display = "block";
+    fb.className = "feedback-banner error";
+    fb.textContent = err.message;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const user = window.medtrackApi?.getUser();
+  if (user) {
+    const nameEl = document.getElementById("ambCallerName");
+    const phoneEl = document.getElementById("ambCallerPhone");
+    if (nameEl) nameEl.value = `${user.firstName || ""} ${user.lastName || ""}`.trim() || "MedTrack User";
+    if (phoneEl && user.phone) phoneEl.value = user.phone;
+  }
+  if (typeof loadHospitalsFromApi === "function") {
+    await loadHospitalsFromApi();
+  }
+  renderAmbulanceFleet();
+});
+window.requestAmbulance = requestAmbulance;
 </script>
 
 </body>
