@@ -17,6 +17,12 @@ const __dirname = path.dirname(__filename);
 export function createApp(db) {
   const app = express();
 
+  // Lightweight health check endpoint for Render and load balancers:
+  // Registered before any parsing, security, database checks, or static routes to prevent timeouts.
+  app.get("/health", (_req, res) => {
+    res.status(200).json({ status: "ok", service: "MedTrack" });
+  });
+
   app.use(
     helmet({
       contentSecurityPolicy: false // Allow Leaflet CDN tiles/scripts and inline event handlers in existing static pages
@@ -61,9 +67,11 @@ export async function bootstrapServer() {
     monitorTimer.unref();
   }
 
+  const port = Number(process.env.PORT) || config.port || 3000;
+  const host = process.env.HOST || "0.0.0.0";
   const app = createApp(db);
-  const server = app.listen(config.port, config.host, () => {
-    console.log(`MedTrack India API & Frontend listening on http://${config.host}:${config.port}`);
+  const server = app.listen(port, host, () => {
+    console.log(`MedTrack India API & Frontend listening on http://${host}:${port}`);
   });
   return { app, db, server };
 }

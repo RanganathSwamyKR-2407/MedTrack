@@ -42,7 +42,13 @@ describe("MedTrack End-to-End API & Security Integration", () => {
     if (db) db.close();
   });
 
-  it("exposes /api/v1/health and OpenAPI /api/v1/docs", async () => {
+  it("exposes root GET /health for Render health checks and /api/v1/health", async () => {
+    const rootRes = await fetch(`${baseUrl}/health`);
+    assert.equal(rootRes.status, 200);
+    const rootData = await rootRes.json();
+    assert.equal(rootData.status, "ok");
+    assert.equal(rootData.service, "MedTrack");
+
     const health = await api("/health");
     assert.equal(health.status, 200);
     assert.equal(health.data.ok, true);
