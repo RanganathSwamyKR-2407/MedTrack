@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facility Registration | MedTrack India</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+
+<body>
+
+<header class="navbar">
+    <a href="index.html" class="logo">
+        <span class="logo-icon">✚</span>
+        <span>Med<span>Track</span></span>
+    </a>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="hospitals.html">Hospitals</a>
+        <a href="emergency.html">Emergency</a>
+        <a href="blood.html">Blood</a>
+    </nav>
+
+    <div class="nav-buttons">
+        <a href="login.html" class="login-btn">Login</a>
+    </div>
+</header>
+
+<main class="dashboard-container">
+    <section class="dashboard-header">
+        <div>
+            <span class="section-label">FACILITY ONBOARDING</span>
+            <h1>Register Hospital or Blood Bank</h1>
+            <p>Submit official facility credentials and pin your exact coordinates on the interactive map.</p>
+        </div>
+        <div class="tab-bar">
+            <button type="button" class="tab-btn active" id="modeHospitalBtn" onclick="setFacilityMode('hospital')">🏥 Hospital</button>
+            <button type="button" class="tab-btn" id="modeBloodBankBtn" onclick="setFacilityMode('blood_bank')">🩸 Blood Bank</button>
+        </div>
+    </section>
+
+    <div id="facilityRegFeedback" style="display:none;margin:20px 0;"></div>
+
+    <div class="hospital-layout" style="margin-top:25px;">
+        <form id="facilityRegisterForm" class="panel-card">
+            <div class="grid-form">
+                <div class="form-group">
+                    <label id="lblFacilityName" for="facilityName">Hospital Name</label>
+                    <input type="text" id="facilityName" required placeholder="e.g. Sahyadri Super Specialty Hospital">
+                </div>
+
+                <div class="form-group">
+                    <label id="lblRegNumber" for="registrationNumber">Registration / License Number</label>
+                    <input type="text" id="registrationNumber" required placeholder="e.g. MH-PUNE-HOSP-2026">
+                </div>
+
+                <div class="form-group" id="hospitalTypeGroup">
+                    <label for="hospitalType">Hospital Type</label>
+                    <select id="hospitalType">
+                        <option value="Multi-Specialty">Multi-Specialty</option>
+                        <option value="Tertiary Care">Tertiary Care</option>
+                        <option value="Trauma & Emergency">Trauma & Emergency</option>
+                        <option value="Government Hospital">Government Hospital</option>
+                        <option value="Medical College">Medical College</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="contactPerson">Contact Person</label>
+                    <input type="text" id="contactPerson" required placeholder="Dr. / Coordinator full name">
+                </div>
+
+                <div class="form-group">
+                    <label for="officialEmail">Official Email Address</label>
+                    <input type="email" id="officialEmail" required placeholder="admin@facility.org">
+                </div>
+
+                <div class="form-group">
+                    <label for="mobile">Mobile Number</label>
+                    <input type="tel" id="mobile" required placeholder="10-digit mobile number">
+                </div>
+
+                <div class="form-group">
+                    <label for="facilityPassword">Account Password</label>
+                    <input type="password" id="facilityPassword" minlength="6" required placeholder="Minimum 6 characters">
+                </div>
+
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label for="address">Complete Address</label>
+                    <input type="text" id="address" required placeholder="Street, landmark, locality">
+                </div>
+
+                <div class="form-group">
+                    <label for="state">State</label>
+                    <input type="text" id="state" required placeholder="e.g. Maharashtra">
+                </div>
+
+                <div class="form-group">
+                    <label for="city">City</label>
+                    <input type="text" id="city" required placeholder="e.g. Pune">
+                </div>
+
+                <div class="form-group">
+                    <label for="pinCode">PIN Code</label>
+                    <input type="text" id="pinCode" required placeholder="e.g. 411001" pattern="[0-9]{4,10}">
+                </div>
+
+                <div class="form-group">
+                    <label for="latitude">Latitude (click map)</label>
+                    <input type="number" step="any" id="latitude" required value="18.5204">
+                </div>
+
+                <div class="form-group">
+                    <label for="longitude">Longitude (click map)</label>
+                    <input type="number" step="any" id="longitude" required value="73.8567">
+                </div>
+            </div>
+
+            <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
+                <button type="button" class="small-btn" onclick="detectPinLocation()">📍 Use Current GPS Location</button>
+                <button type="submit" class="primary-btn">Submit Registration for Verification</button>
+            </div>
+        </form>
+
+        <div class="panel-card">
+            <span class="section-label">INTERACTIVE MAP PIN</span>
+            <h3 style="margin-bottom:8px;">Select Facility Location</h3>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Click anywhere on the map or drag the marker to set exact latitude &amp; longitude.</p>
+            <div id="registerLocationMap" class="map-box-lg"></div>
+        </div>
+    </div>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/api-client.js"></script>
+<script src="js/hospital-register.js"></script>
+</body>
+
+</html>

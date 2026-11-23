@@ -2,339 +2,301 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hospital Dashboard | MedTrack</title>
-
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
-
-    <link
-        rel="stylesheet"
-        href="dashboard.css"
-    >
-
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
-
 
 <body>
 
-
 <header class="navbar">
-
     <a href="index.html" class="logo">
-
-        <span class="logo-icon">
-            ✚
-        </span>
-
+        <span class="logo-icon">✚</span>
         Med<span>Track</span>
-
     </a>
 
-
     <nav>
-
-        <a href="index.html">
-            Home
-        </a>
-
-        <a href="hospitals.html">
-            Hospitals
-        </a>
-
-        <a
-            href="hospital-dashboard.html"
-            class="active"
-        >
-            Dashboard
-        </a>
-
+        <a href="index.html">Home</a>
+        <a href="hospitals.html">Hospitals</a>
+        <a href="blood.html">Blood</a>
+        <a href="hospital-dashboard.html" class="active">Dashboard</a>
     </nav>
 
+    <div class="nav-buttons">
+        <a href="login.html" class="login-btn">Login</a>
+    </div>
 </header>
-
-
 
 <main class="dashboard-container">
 
+    <section class="dashboard-header">
+        <div>
+            <span class="section-label">HOSPITAL PORTAL</span>
+            <h1 id="hospitalTitle">City Care Hospital</h1>
+            <p id="hospitalSubtitle">Manage live hospital availability, blood requests, and IoT transport boxes.</p>
+        </div>
 
-<section class="dashboard-header">
+        <span id="verificationBadge" class="verified-badge">✓ VERIFIED HOSPITAL</span>
+    </section>
 
-    <div>
-
-        <span class="section-label">
-            HOSPITAL PORTAL
-        </span>
-
-        <h1>
-            City Care Hospital
-        </h1>
-
-        <p>
-            Manage live hospital availability.
-        </p>
-
+    <div class="freshness-card">
+        <span>🟢</span>
+        <strong id="liveStatusText">Availability is live</strong>
+        <small id="lastUpdatedText">Last updated just now</small>
+        <span id="hospitalFeedback" class="freshness-feedback"></span>
     </div>
 
-
-    <span class="verified-badge">
-        ✓ VERIFIED HOSPITAL
-    </span>
-
-</section>
-
-
-
-<div class="freshness-card">
-
-    <span>
-        🟢
-    </span>
-
-    <strong>
-        Availability is live
-    </strong>
-
-    <small>
-        Last updated just now
-    </small>
-
-</div>
-
-
-
-<h2 class="dashboard-title">
-    Bed Availability
-</h2>
-
-
-
-<section class="dashboard-cards">
-
-
-<div class="dashboard-card">
-
-    <span>
-        General Beds
-    </span>
-
-    <strong id="generalBeds">
-        32
-    </strong>
-
-    <button
-        onclick="changeBed('general', -1)"
-        class="small-btn"
-    >
-        − 1
-    </button>
-
-</div>
-
-
-
-<div class="dashboard-card">
-
-    <span>
-        ICU Beds
-    </span>
-
-    <strong id="icuBeds">
-        4
-    </strong>
-
-    <button
-        onclick="changeBed('icu', -1)"
-        class="small-btn"
-    >
-        − 1
-    </button>
-
-</div>
-
-
-
-<div class="dashboard-card">
-
-    <span>
-        Emergency Beds
-    </span>
-
-    <strong id="emergencyBeds">
-        8
-    </strong>
-
-    <button
-        onclick="changeBed('emergency', -1)"
-        class="small-btn"
-    >
-        − 1
-    </button>
-
-</div>
-
-
-
-<div class="dashboard-card">
-
-    <span>
-        Ambulances
-    </span>
-
-    <strong id="ambulances">
-        2
-    </strong>
-
-    <button
-        onclick="changeAmbulance(-1)"
-        class="small-btn"
-    >
-        − 1
-    </button>
-
-</div>
-
-
-</section>
-
-
-
-<h2 class="dashboard-title">
-    Facilities
-</h2>
-
-
-
-<section class="facility-grid">
-
-
-<button onclick="toggleFacility(this)">
-
-    🫁 Ventilator
-
-    <span>
-        AVAILABLE
-    </span>
-
-</button>
-
-
-
-<button onclick="toggleFacility(this)">
-
-    🫧 Oxygen
-
-    <span>
-        AVAILABLE
-    </span>
-
-</button>
-
-
-
-<button onclick="toggleFacility(this)">
-
-    🩸 Blood Bank
-
-    <span>
-        AVAILABLE
-    </span>
-
-</button>
-
-
-
-<button onclick="toggleFacility(this)">
-
-    CT Scan
-
-    <span>
-        AVAILABLE
-    </span>
-
-</button>
-
-
-
-<button onclick="toggleFacility(this)">
-
-    MRI
-
-    <span>
-        UNAVAILABLE
-    </span>
-
-</button>
-
-
-
-<button onclick="toggleFacility(this)">
-
-    Dialysis
-
-    <span>
-        AVAILABLE
-    </span>
-
-</button>
-
-
-</section>
-
-
-
-<h2 class="dashboard-title">
-    Emergency Requests
-</h2>
-
-
-
-<div class="request-card">
-
-    <div>
-
-        <strong>
-            ER-4821
-        </strong>
-
-        <p>
-            ICU required • 2.4 km away
-        </p>
-
+    <div id="hospitalOnboardingBanner" style="display:none;margin:18px 0;"></div>
+    <div id="contactVerifyBanner" style="display:none;margin:18px 0;"></div>
+
+    <div class="tab-bar" style="margin-bottom:24px;">
+        <button type="button" class="tab-btn active" onclick="switchHospitalTab('beds', this)">🛏 Beds &amp; Facilities</button>
+        <button type="button" class="tab-btn" onclick="switchHospitalTab('blood', this)">🩸 Blood Requests</button>
+        <button type="button" class="tab-btn" onclick="switchHospitalTab('iot', this)">📦 IoT Transport &amp; OTP</button>
+        <button type="button" class="tab-btn" onclick="switchHospitalTab('profile', this)">📍 Profile &amp; Map Location</button>
+        <button type="button" class="tab-btn" onclick="switchHospitalTab('alerts', this)">🔔 Alerts</button>
     </div>
 
+    <!-- TAB 1: BEDS & FACILITIES (Preserved Original Controls) -->
+    <section id="tab-beds" class="tab-panel active">
+        <h2 class="dashboard-title">Bed Availability</h2>
+        <section class="dashboard-cards">
+            <div class="dashboard-card">
+                <span>General Beds</span>
+                <strong id="generalBeds">32</strong>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="changeBed('general', -1)" class="small-btn">− 1</button>
+                    <button onclick="changeBed('general', 1)" class="small-btn">+ 1</button>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <span>ICU Beds</span>
+                <strong id="icuBeds">4</strong>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="changeBed('icu', -1)" class="small-btn">− 1</button>
+                    <button onclick="changeBed('icu', 1)" class="small-btn">+ 1</button>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <span>Emergency Beds</span>
+                <strong id="emergencyBeds">8</strong>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="changeBed('emergency', -1)" class="small-btn">− 1</button>
+                    <button onclick="changeBed('emergency', 1)" class="small-btn">+ 1</button>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <span>Ambulances</span>
+                <strong id="ambulances">2</strong>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="changeAmbulance(-1)" class="small-btn">− 1</button>
+                    <button onclick="changeAmbulance(1)" class="small-btn">+ 1</button>
+                </div>
+            </div>
+        </section>
 
-    <span class="status busy">
-        PENDING
-    </span>
+        <h2 class="dashboard-title">Facilities</h2>
+        <section class="facility-grid">
+            <button data-facility="Ventilator" onclick="toggleFacility(this)">🫁 Ventilator <span>AVAILABLE</span></button>
+            <button data-facility="Oxygen" onclick="toggleFacility(this)">🫧 Oxygen <span>AVAILABLE</span></button>
+            <button data-facility="Blood Bank" onclick="toggleFacility(this)">🩸 Blood Bank <span>AVAILABLE</span></button>
+            <button data-facility="CT Scan" onclick="toggleFacility(this)">CT Scan <span>AVAILABLE</span></button>
+            <button data-facility="MRI" onclick="toggleFacility(this)">MRI <span>UNAVAILABLE</span></button>
+            <button data-facility="Dialysis" onclick="toggleFacility(this)">Dialysis <span>AVAILABLE</span></button>
+        </section>
 
+        <h2 class="dashboard-title">Emergency &amp; Ambulance Requests</h2>
+        <div id="hospitalEmergencyList" class="stack-list"></div>
+    </section>
 
-    <button
-        onclick="acceptRequest()"
-        class="primary-btn"
-    >
-        Accept
-    </button>
+    <!-- TAB 2: BLOOD REQUESTS & INCOMING DELIVERIES -->
+    <section id="tab-blood" class="tab-panel" style="display:none;">
+        <div class="panel-card" style="margin-bottom:20px;">
+            <span class="section-label">NEW REQUEST</span>
+            <h2 style="margin-bottom:14px;">Request Blood from Verified Blood Bank</h2>
+            <form id="hospitalBloodReqForm" class="grid-form">
+                <div class="form-group">
+                    <label for="hospReqBankSelect">Blood Bank</label>
+                    <select id="hospReqBankSelect" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="hospReqGroup">Blood Group</label>
+                    <select id="hospReqGroup">
+                        <option value="O+">O+</option><option value="O-">O-</option>
+                        <option value="A+">A+</option><option value="A-">A-</option>
+                        <option value="B+">B+</option><option value="B-">B-</option>
+                        <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="hospReqUnits">Units</label>
+                    <input type="number" id="hospReqUnits" min="1" max="20" value="2" required>
+                </div>
+                <div class="form-group">
+                    <label for="hospReqUrgency">Urgency</label>
+                    <select id="hospReqUrgency">
+                        <option value="normal">Normal</option>
+                        <option value="urgent">Urgent</option>
+                        <option value="critical">Critical</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="hospReqContact">Recipient Contact</label>
+                    <input type="tel" id="hospReqContact" required>
+                </div>
+                <div class="form-group">
+                    <label for="hospReqNotes">Notes</label>
+                    <input type="text" id="hospReqNotes" placeholder="Ward / case note">
+                </div>
+                <div style="grid-column:1/-1;">
+                    <button type="submit" class="primary-btn">Send Blood Request</button>
+                </div>
+            </form>
+        </div>
 
-</div>
+        <h2 class="dashboard-title">Blood Requests &amp; Deliveries</h2>
+        <div id="hospitalBloodRequestsList" class="stack-list"></div>
+    </section>
 
+    <!-- TAB 3: IOT TRANSPORT TRACKING, TEMPERATURE & OTP SMART ACCESS -->
+    <section id="tab-iot" class="tab-panel" style="display:none;">
+        <div class="disclaimer-banner">
+            ⚠️ <strong>Prototype Notice:</strong> Temperature and Peltier cooling controls are prototype telemetry only and are not clinically validated. Physical thermal qualification is required before clinical blood transport.
+        </div>
+
+        <div class="form-group" style="max-width:420px;margin:16px 0;">
+            <label for="activeTransportSelect">Select Active Transport</label>
+            <select id="activeTransportSelect"></select>
+        </div>
+
+        <div id="transportSummaryCards" class="dashboard-cards" style="margin-bottom:20px;"></div>
+
+        <div class="hospital-layout">
+            <div class="panel-card">
+                <span class="section-label">LIVE TRANSPORT BOX GPS</span>
+                <h3 style="margin-bottom:10px;">Journey Map &amp; Box Location</h3>
+                <div id="transportRouteMap" class="map-box-md"></div>
+                <div id="gpsStatusMeta" style="margin-top:10px;font-size:13px;color:var(--muted);"></div>
+            </div>
+
+            <div class="panel-card">
+                <span class="section-label">THERMAL TELEMETRY (4°C – 8°C)</span>
+                <h3 style="margin-bottom:10px;">Temperature History &amp; Cooling Policy</h3>
+                <div id="tempChartContainer"></div>
+                <div id="tempExcursionsList" style="margin-top:12px;font-size:13px;"></div>
+            </div>
+        </div>
+
+        <div class="hospital-layout" style="margin-top:20px;">
+            <div class="panel-card">
+                <span class="section-label">MODULE C — OTP SMART DOOR ACCESS</span>
+                <h3>Recipient Door Unlock &amp; Access Logs</h3>
+                <p style="font-size:13px;color:var(--muted);margin:6px 0 12px;">
+                    Generates a cryptographically random, single-use, time-limited OTP stored only as an HMAC-SHA256 hash.
+                </p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+                    <button type="button" class="primary-btn" onclick="generateTransportOtp()">🔐 Generate Access OTP</button>
+                    <button type="button" class="small-btn" onclick="markTransportDelivered()">✓ Confirm Delivery</button>
+                </div>
+                <div id="otpDisplayBox" style="margin-bottom:12px;"></div>
+                <div id="accessLogsList" class="stack-list"></div>
+            </div>
+
+            <div class="panel-card" style="border:1px dashed #d97706;background:#fffdf7;">
+                <span class="section-label" style="color:#b45309;">DEV / TEST HARDWARE SIMULATOR</span>
+                <h3>Simulate ESP32 Box Events</h3>
+                <p style="font-size:13px;color:var(--muted);margin:6px 0 12px;">
+                    Clearly labeled simulation controls for testing without physical ESP32 hardware attached.
+                </p>
+                <div class="grid-form">
+                    <div class="form-group">
+                        <label for="simTempInput">Simulate Temp (°C)</label>
+                        <input type="number" step="0.1" id="simTempInput" value="9.2">
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;">
+                        <button type="button" class="small-btn" onclick="simulateTemperature(false)">Send Temp</button>
+                        <button type="button" class="small-btn" onclick="simulateTemperature(true)">Simulate Sensor Fault</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="simOtpInput">Keypad OTP Entry (6 digits)</label>
+                        <input type="text" id="simOtpInput" maxlength="6" placeholder="Enter 6-digit OTP">
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:flex-end;gap:8px;">
+                        <button type="button" class="primary-btn" onclick="simulateKeypadVerify()">Verify Keypad OTP</button>
+                    </div>
+                    <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" class="small-btn" onclick="simulateDoorEvent('door_opened')">🚪 Reed Switch: Door Opened</button>
+                        <button type="button" class="small-btn" onclick="simulateDoorEvent('door_closed')">🔒 Reed Switch: Door Closed</button>
+                        <button type="button" class="small-btn" onclick="simulateGpsMove()">🛰️ Simulate GPS Step</button>
+                    </div>
+                </div>
+                <div id="simFeedback" style="margin-top:10px;font-size:13px;font-weight:600;"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TAB 4: HOSPITAL PROFILE & MAP LOCATION -->
+    <section id="tab-profile" class="tab-panel" style="display:none;">
+        <div class="hospital-layout">
+            <form id="hospitalProfileForm" class="panel-card">
+                <span class="section-label">FACILITY PROFILE</span>
+                <h2 style="margin-bottom:14px;">Update Hospital Information &amp; Location</h2>
+                <div class="grid-form">
+                    <div class="form-group">
+                        <label for="profName">Hospital Name</label>
+                        <input type="text" id="profName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="profMobile">Mobile</label>
+                        <input type="tel" id="profMobile" required>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label for="profAddress">Address</label>
+                        <input type="text" id="profAddress" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="profCity">City</label>
+                        <input type="text" id="profCity" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="profState">State</label>
+                        <input type="text" id="profState" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="profLat">Latitude</label>
+                        <input type="number" step="any" id="profLat" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="profLng">Longitude</label>
+                        <input type="number" step="any" id="profLng" required>
+                    </div>
+                </div>
+                <button type="submit" class="primary-btn" style="margin-top:12px;">Save Profile &amp; Coordinates</button>
+            </form>
+
+            <div class="panel-card">
+                <span class="section-label">LOCATION PICKER</span>
+                <h3 style="margin-bottom:10px;">Click Map to Update Hospital Coordinates</h3>
+                <div id="profileLocationMap" class="map-box-md"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TAB 5: ALERTS -->
+    <section id="tab-alerts" class="tab-panel" style="display:none;">
+        <h2 class="dashboard-title">Notifications &amp; Alerts</h2>
+        <div id="hospitalAlertsList" class="stack-list"></div>
+    </section>
 
 </main>
 
-
-
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/api-client.js"></script>
+<script src="js/iot-monitor.js"></script>
 <script src="hospital-dashboard.js"></script>
-
-
 </body>
 
 </html>

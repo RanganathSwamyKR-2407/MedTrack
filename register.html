@@ -166,6 +166,8 @@
             </div>
 
 
+            <div id="authFeedback" style="display:none;"></div>
+
             <form id="registerForm">
 
 
@@ -261,6 +263,10 @@
                             Hospital Staff
                         </option>
 
+                        <option value="blood_bank">
+                            Blood Bank Coordinator
+                        </option>
+
                     </select>
 
                 </div>
@@ -337,16 +343,20 @@
 
                     <span>
                         I agree to the
-                        <a href="#">
+                        <a href="#termsInfoBox" id="openTermsLink">
                             Terms of Service
                         </a>
                         and
-                        <a href="#">
+                        <a href="#termsInfoBox" id="openPrivacyLink">
                             Privacy Policy
                         </a>
                     </span>
 
                 </label>
+
+                <div id="termsInfoBox" style="display:none;margin-bottom:14px;padding:12px;border-radius:8px;background:#f4f8f7;border:1px solid #d5e2df;font-size:12px;color:#334155;">
+                    <strong>MedTrack Terms &amp; Privacy Notice:</strong> Account credentials are encrypted using scrypt hashing. Location, blood inventory, and IoT transport logs are retained strictly for emergency coordination, auditability, and prototype demonstration.
+                </div>
 
 
 
@@ -361,21 +371,12 @@
 
 
             <div class="auth-divider">
-                <span>OR</span>
+                <span>FACILITY ONBOARDING</span>
             </div>
 
-
-            <button
-                type="button"
-                class="google-btn"
-                id="googleRegister"
-            >
-
-                <span>G</span>
-
-                Continue with Google
-
-            </button>
+            <a href="hospital-register.html" class="google-btn" style="text-decoration:none;color:inherit;">
+                🏥 Register Hospital / Blood Bank with Map Pin
+            </a>
 
 
             <p class="auth-switch">
@@ -425,6 +426,7 @@
 </footer>
 
 
+<script src="js/api-client.js"></script>
 <script src="auth.js"></script>
 
 </body>

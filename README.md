@@ -1,169 +1,69 @@
-# 🏥 MedTrack India
+# 🏥 MedTrack India — Smart Blood Availability & IoT Blood Transportation Platform
 
-## Intelligent Healthcare Resource Discovery & Emergency Coordination Platform
+MedTrack India combines intelligent hospital & blood bank discovery with an extensible **IoT-monitored blood transportation system** (`4°C–8°C` cold-chain telemetry, GPS route tracking, and CSPRNG OTP smart door access).
 
-MedTrack India is a web-based healthcare discovery platform designed to help users find suitable hospitals based on their location, medical requirements, hospital availability, emergency services, and travel time.
-
-Instead of simply showing the nearest hospital, MedTrack aims to answer:
-
-> **"Which suitable hospital can actually help me right now?"**
+> **Prototype Notice:** The IoT temperature control and Peltier cooling modules are engineering prototypes and are **not clinically validated**. Physical thermal validation and regulatory compliance are required prior to clinical blood transport.
 
 ---
 
-## 🚀 Key Features
+## Key Capabilities
 
-### 📍 Hospital Discovery
-
-Users can search for hospitals based on:
-
-- Hospital name
-- City
-- State
-- Location
-- Medical specialty
-- Healthcare requirements
-
-The platform supports hospital discovery across different locations in India.
-
----
-
-### 🗺️ Interactive GPS Map
-
-MedTrack uses an interactive map to display hospitals and their locations.
-
-Features include:
-
-- Hospital locations
-- User location
-- Hospital markers
-- Location-based discovery
-- Navigation to hospitals
-- Distance and travel information
-
-The project uses **Leaflet.js** for map functionality.
+- **Existing Public Discovery (Preserved & Upgraded):**
+  - `index.html`, `hospitals.html`, `hospital.html`, `emergency.html`, `ambulance.html` with interactive Leaflet maps, geolocation distance ranking, and smart matching backed by `/api/v1/hospitals`.
+- **Module A — Hospital Registration & Management:**
+  - Dedicated onboarding (`hospital-register.html`) with license/registration number, hospital type, address/PIN, interactive Leaflet map pin picker, `bcryptjs` + JWT RBAC, and Admin verification workflow.
+- **Module B — Blood Banks & 8-Group Inventory:**
+  - Supports `A+`, `A-`, `B+`, `B-`, `O+`, `O-`, `AB+`, `AB-` with automatic status classification (`Sufficient`, `Low`, `Critical`, `Unavailable`), timestamped `inventory_history`, nearby search (`blood.html`), and request → accept/reject → dispatch lifecycle.
+- **Module C — OTP Smart Door Access:**
+  - Backend CSPRNG 6-digit OTPs stored only as HMAC-SHA256 hashes, rate limiting + lockout after repeated failures, short-lived unlock tokens, and reed-switch `door_opened`/`door_closed` audit logging.
+- **Temperature & GPS Telemetry:**
+  - Configurable `4°C–8°C` hysteresis policy, excursion & sensor-failure detection (`-127°C`/`85°C`), SVG temperature history charts, distinct static facility vs. live transport box GPS trails, and `online` / `stale` / `offline` states.
+- **Role Dashboards:**
+  - Hospital (`hospital-dashboard.html`), Blood Bank (`blood-bank-dashboard.html`), and Administrator (`admin-dashboard.html`).
+- **Modular ESP32 Firmware (`firmware/esp32_medtrack/`):**
+  - Separate C++ drivers for DS18B20, Peltier relay + hysteresis controller, Neo-6M GPS, Servo latch (`IDoorLock`), Reed switch, 4x4 Keypad, Buzzer/LEDs, and HTTPS REST client.
 
 ---
 
-### 🤖 Smart Hospital Recommendation
+## Quick Start
 
-MedTrack provides intelligent hospital matching instead of relying only on distance.
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+2. **Configure environment (optional for local dev):**
+   Copy `.env.example` to `.env` and set `JWT_SECRET` and `OTP_HMAC_SECRET` in production.
+3. **Run the server (runs SQLite migrations & idempotent seed on startup):**
+   ```bash
+   npm run dev
+   ```
+   Open `http://localhost:3000`.
+4. **Run automated tests & checks:**
+   ```bash
+   npm test
+   npm run lint
+   npm run build
+   ```
 
-Hospital recommendations can consider:
+## Seeded Demo Accounts (Development)
 
-- Hospital rating
-- ICU availability
-- General beds
-- Emergency beds
-- Emergency capability
-- Medical specialties
-- Ambulance availability
-- Travel time
-- Hospital status
+Password for all seeded demo accounts: `MedTrack@2026` (quick-fill buttons are available on `login.html`):
 
-The system calculates a suitability score to help rank hospitals.
+- **Hospital Staff:** `ruby@medtrack.in` (Ruby Hall Clinic)
+- **Blood Bank Coordinator:** `cityblood@medtrack.in` (City Blood Bank)
+- **Administrator:** `admin@medtrack.in`
+- **Patient:** `patient@medtrack.in`
 
----
+## Hardware Simulation Mode
 
-### 🚨 Emergency Mode
+When `SIMULATION_MODE=true`, the Hospital Dashboard (`📦 IoT Transport & OTP` tab) includes a clearly labeled **Dev/Test Hardware Simulator** to test temperature excursions, sensor failures, GPS steps, keypad OTP verification, and reed-switch door events without physical ESP32 hardware.
 
-The Emergency section is designed for users who need urgent healthcare assistance.
+## Architecture & Documentation (`docs/`)
 
-Users can search for hospitals suitable for requirements such as:
-
-- Emergency care
-- ICU
-- Cardiology
-- Ambulance
-- Trauma-related care
-
-The system can display suitable hospitals and provide navigation options.
-
----
-
-### 🛏️ Hospital Availability
-
-Hospital information includes resource availability such as:
-
-- General beds
-- ICU beds
-- Emergency beds
-- Ambulances
-- Emergency services
-
-Hospital status can be displayed as:
-
-🟢 AVAILABLE
-
-🟡 LIMITED
-
-🔴 FULL
-
----
-
-### 🏥 Hospital Details
-
-Users can select a hospital to view detailed information including:
-
-- Hospital name
-- Address
-- City
-- State
-- Medical specialties
-- Bed availability
-- ICU availability
-- Emergency availability
-- Ambulances
-- Rating
-- Verification status
-- Last updated time
-
----
-
-### 🚑 Ambulance Module
-
-The Ambulance section provides a dedicated interface for ambulance-related information and emergency coordination.
-
-The project structure supports ambulance-related functionality through:
-
-`ambulance.html`
-
----
-
-### 🩸 Blood Availability
-
-The Blood section provides a dedicated interface for blood-related emergency requirements.
-
-The project structure supports blood availability functionality through:
-
-`blood.html`
-
----
-
-### 🏥 Hospital Dashboard
-
-Registered hospitals can use a dedicated dashboard interface.
-
-The dashboard is designed to monitor and update hospital resources such as:
-
-- Total beds
-- Available beds
-- ICU beds
-- Emergency resources
-- Ambulances
-- Hospital status
-
----
-
-## 🧠 How Smart Matching Works
-
-MedTrack ranks hospitals using multiple factors instead of simply selecting the nearest hospital.
-
-A simplified scoring approach considers:
-
-```text
-Hospital Score =
-    Rating
-    + ICU Availability
-    + General Bed Availability
-    + Travel Time
-    + Hospital Capability
+- `docs/ARCHITECTURE.md`
+- `docs/DATABASE_DESIGN.md`
+- `docs/API_DOCUMENTATION.md` (live OpenAPI JSON at `GET /api/v1/docs`)
+- `docs/IOT_INTEGRATION.md`
+- `docs/HARDWARE_CONFIGURATION.md`
+- `docs/SECURITY.md`
+- `docs/IMPLEMENTATION_ROADMAP.md`

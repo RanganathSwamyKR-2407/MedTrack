@@ -106,6 +106,8 @@
             </div>
 
 
+            <div id="authFeedback" style="display:none;"></div>
+
             <form id="loginForm">
 
                 <div class="form-group">
@@ -180,25 +182,48 @@
 
             </form>
 
+            <section id="resetPasswordPanel" style="display:none;margin-top:16px;padding:14px;border:1px solid #d5e2df;border-radius:10px;background:#f8fbfa;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <strong style="font-size:14px;">Reset Password</strong>
+                    <button type="button" id="closeResetPanelBtn" class="small-btn" style="padding:4px 10px;">✕</button>
+                </div>
+                <div id="resetFeedback" style="display:none;margin-bottom:10px;"></div>
+                <form id="requestResetForm" style="margin-bottom:12px;">
+                    <div class="form-group">
+                        <label for="resetEmailInput">Account Email</label>
+                        <input type="email" id="resetEmailInput" placeholder="Enter your registered email" required>
+                    </div>
+                    <button type="submit" class="small-btn" style="width:100%;">Request Reset Token</button>
+                </form>
+                <form id="confirmResetForm">
+                    <div class="form-group">
+                        <label for="resetTokenInput">Reset Token</label>
+                        <input type="text" id="resetTokenInput" placeholder="Paste reset token" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="resetNewPassword">New Password</label>
+                        <input type="password" id="resetNewPassword" minlength="6" placeholder="Minimum 6 characters" required>
+                    </div>
+                    <button type="submit" class="primary-btn" style="width:100%;">Confirm Password Reset</button>
+                </form>
+            </section>
+
 
             <div class="auth-divider">
-                <span>OR</span>
+                <span>DEMO ACCOUNTS (DEV/TEST)</span>
             </div>
 
-
-            <button
-                type="button"
-                class="google-btn"
-                id="googleLogin"
-            >
-                <span>G</span>
-                Continue with Google
-            </button>
-
+            <div class="demo-accounts-grid">
+                <button type="button" class="small-btn" onclick="fillDemoLogin('ruby@medtrack.in','MedTrack@2026')">🏥 Hospital</button>
+                <button type="button" class="small-btn" onclick="fillDemoLogin('cityblood@medtrack.in','MedTrack@2026')">🩸 Blood Bank</button>
+                <button type="button" class="small-btn" onclick="fillDemoLogin('admin@medtrack.in','MedTrack@2026')">🛡️ Admin</button>
+                <button type="button" class="small-btn" onclick="fillDemoLogin('patient@medtrack.in','MedTrack@2026')">👤 Patient</button>
+            </div>
 
             <p class="auth-switch">
                 Don't have an account?
                 <a href="register.html">Create an account</a>
+                • <a href="hospital-register.html">Register Facility (Map)</a>
             </p>
 
         </div>
@@ -230,6 +255,7 @@
 </footer>
 
 
+<script src="js/api-client.js"></script>
 <script src="auth.js"></script>
 
 </body>

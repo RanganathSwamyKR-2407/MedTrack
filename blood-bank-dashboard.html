@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Bank Dashboard | MedTrack</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+
+<body>
+
+<header class="navbar">
+    <a href="index.html" class="logo">
+        <span class="logo-icon">✚</span>
+        Med<span>Track</span>
+    </a>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="hospitals.html">Hospitals</a>
+        <a href="blood.html">Blood</a>
+        <a href="blood-bank-dashboard.html" class="active">Blood Bank</a>
+    </nav>
+
+    <div class="nav-buttons">
+        <a href="login.html" class="login-btn">Login</a>
+    </div>
+</header>
+
+<main class="dashboard-container">
+    <section class="dashboard-header">
+        <div>
+            <span class="section-label">BLOOD BANK PORTAL</span>
+            <h1 id="bankTitle">Blood Bank Dashboard</h1>
+            <p id="bankSubtitle">Manage 8-group blood inventory, incoming hospital requests, and IoT dispatch boxes.</p>
+        </div>
+        <span id="bankVerifiedBadge" class="verified-badge">✓ VERIFIED BLOOD BANK</span>
+    </section>
+
+    <div id="bankFeedback" style="display:none;margin:18px 0;"></div>
+    <div id="bankOnboardingBanner" style="display:none;margin:18px 0;"></div>
+    <div id="bankContactVerifyBanner" style="display:none;margin:18px 0;"></div>
+
+    <div class="tab-bar" style="margin:24px 0;">
+        <button type="button" class="tab-btn active" onclick="switchBankTab('inventory', this)">🩸 Blood Inventory</button>
+        <button type="button" class="tab-btn" onclick="switchBankTab('requests', this)">📋 Blood Requests &amp; Dispatch</button>
+        <button type="button" class="tab-btn" onclick="switchBankTab('transports', this)">📦 Active Transports</button>
+        <button type="button" class="tab-btn" onclick="switchBankTab('history', this)">🕒 Inventory History</button>
+        <button type="button" class="tab-btn" onclick="switchBankTab('profile', this)">📍 Profile &amp; Map Location</button>
+        <button type="button" class="tab-btn" onclick="switchBankTab('alerts', this)">🔔 Alerts</button>
+    </div>
+
+    <!-- INVENTORY -->
+    <section id="bank-tab-inventory" class="bank-tab-panel">
+        <h2 class="dashboard-title">8-Group Blood Stock Inventory</h2>
+        <div id="inventoryGrid" class="dashboard-cards"></div>
+    </section>
+
+    <!-- REQUESTS & DISPATCH -->
+    <section id="bank-tab-requests" class="bank-tab-panel" style="display:none;">
+        <h2 class="dashboard-title">Incoming Blood Requests</h2>
+        <div id="bankRequestsList" class="stack-list"></div>
+    </section>
+
+    <!-- TRANSPORTS -->
+    <section id="bank-tab-transports" class="bank-tab-panel" style="display:none;">
+        <div class="disclaimer-banner">
+            ⚠️ <strong>Prototype Notice:</strong> IoT cooler telemetry is for prototype demonstration and requires physical validation before clinical blood use.
+        </div>
+        <h2 class="dashboard-title">Dispatched Shipments &amp; Live Tracking</h2>
+        <div id="bankTransportsList" class="stack-list" style="margin-bottom:20px;"></div>
+        <div id="bankTransportSummaryCards" class="dashboard-cards" style="margin-bottom:20px;"></div>
+        <div class="hospital-layout">
+            <div class="panel-card">
+                <span class="section-label">BOX GPS TRAIL</span>
+                <div id="bankTransportMap" class="map-box-md"></div>
+            </div>
+            <div class="panel-card">
+                <span class="section-label">CHAMBER TEMPERATURE (4°C – 8°C)</span>
+                <div id="bankTempChart"></div>
+                <div id="bankCoolingMeta" style="margin-top:10px;font-size:13px;color:var(--muted);"></div>
+                <div id="bankModularSensors" style="margin-top:8px;"></div>
+            </div>
+        </div>
+        <div class="panel-card" style="margin-top:20px;">
+            <span class="section-label">DOOR ACCESS &amp; OTP AUDIT</span>
+            <h3 style="margin-bottom:10px;">Selected Shipment Door Logs</h3>
+            <div id="bankAccessLogs" class="stack-list"></div>
+        </div>
+    </section>
+
+    <!-- INVENTORY HISTORY -->
+    <section id="bank-tab-history" class="bank-tab-panel" style="display:none;">
+        <h2 class="dashboard-title">Inventory Audit History</h2>
+        <div class="panel-card table-scroll-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Blood Group</th>
+                        <th>Previous</th>
+                        <th>Delta</th>
+                        <th>New</th>
+                        <th>Reason</th>
+                        <th>Account</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryHistoryBody"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- PROFILE & MAP LOCATION -->
+    <section id="bank-tab-profile" class="bank-tab-panel" style="display:none;">
+        <div class="hospital-layout">
+            <form id="bankProfileForm" class="panel-card">
+                <span class="section-label">BLOOD BANK PROFILE</span>
+                <h2 style="margin-bottom:14px;">Update Profile &amp; Map Location</h2>
+                <div class="grid-form">
+                    <div class="form-group">
+                        <label for="bankProfName">Blood Bank Name</label>
+                        <input type="text" id="bankProfName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bankProfPhone">Contact Phone</label>
+                        <input type="tel" id="bankProfPhone" required>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label for="bankProfAddress">Address</label>
+                        <input type="text" id="bankProfAddress" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bankProfCity">City</label>
+                        <input type="text" id="bankProfCity" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bankProfState">State</label>
+                        <input type="text" id="bankProfState" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bankProfLat">Latitude</label>
+                        <input type="number" step="any" id="bankProfLat" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bankProfLng">Longitude</label>
+                        <input type="number" step="any" id="bankProfLng" required>
+                    </div>
+                </div>
+                <button type="submit" class="primary-btn" style="margin-top:12px;">Save Profile &amp; Coordinates</button>
+            </form>
+            <div class="panel-card">
+                <span class="section-label">LOCATION PICKER</span>
+                <h3 style="margin-bottom:10px;">Click Map to Update Coordinates</h3>
+                <div id="bankProfileMap" class="map-box-md"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ALERTS -->
+    <section id="bank-tab-alerts" class="bank-tab-panel" style="display:none;">
+        <h2 class="dashboard-title">Notifications &amp; Alerts</h2>
+        <div id="bankAlertsList" class="stack-list"></div>
+    </section>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/api-client.js"></script>
+<script src="js/iot-monitor.js"></script>
+<script src="js/blood-bank-dashboard.js"></script>
+</body>
+
+</html>
