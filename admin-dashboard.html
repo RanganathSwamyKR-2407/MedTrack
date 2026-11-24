@@ -45,6 +45,7 @@
 
     <div class="tab-bar" style="margin-bottom:20px;">
         <button type="button" class="tab-btn active" onclick="switchAdminTab('facilities', this)">🏥 Facilities &amp; Verification</button>
+        <button type="button" class="tab-btn" onclick="switchAdminTab('transports', this)">📦 Shipments &amp; Admin OTP</button>
         <button type="button" class="tab-btn" onclick="switchAdminTab('blood', this)">🩸 Blood Overview</button>
         <button type="button" class="tab-btn" onclick="switchAdminTab('iot', this)">📦 IoT Boxes &amp; Excursions</button>
         <button type="button" class="tab-btn" onclick="switchAdminTab('alerts', this)">🔔 System Alerts</button>
@@ -57,6 +58,107 @@
         <div id="adminHospitalsList" class="stack-list"></div>
         <h2 class="dashboard-title">Registered Blood Banks</h2>
         <div id="adminBloodBanksList" class="stack-list"></div>
+    </section>
+
+    <section id="admin-tab-transports" class="admin-tab-panel" style="display:none;">
+        <h2 class="dashboard-title">Active Blood Shipments &amp; Administrator OTP Generator</h2>
+        
+        <div class="panel-card" style="margin-bottom:20px;">
+            <span class="section-label">AUTHORITATIVE ACCESS OVERRIDE</span>
+            <h3>Select Active Blood Shipment</h3>
+            <p style="font-size:13px;color:var(--muted);margin:6px 0 12px;">
+                As an Administrator, you can generate authoritative master access OTPs for any active blood shipment across all hospitals and blood banks.
+                The OTP is cryptographically hashed with HMAC-SHA256 and accepted in all hardware and software modes.
+            </p>
+            <div class="form-group" style="margin-bottom:14px;">
+                <label for="adminTransportSelect">Active Transport Shipment</label>
+                <select id="adminTransportSelect" onchange="onAdminTransportChange(this.value)" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);font-size:14px;">
+                    <option value="">Loading active blood transports...</option>
+                </select>
+            </div>
+            <div id="adminTransportSummaryCards" class="dashboard-cards" style="margin-top:14px;"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin-bottom:20px;">
+            <!-- Admin OTP Generator Card -->
+            <div class="panel-card" style="border:1px solid #087f5b;">
+                <span class="section-label" style="color:#087f5b;">ADMIN MASTER OTP GENERATOR</span>
+                <h3>Generate Master Access OTP</h3>
+                <p style="font-size:13px;color:var(--muted);margin:6px 0 12px;">
+                    Generates a single-use 6-digit access OTP stored as an HMAC-SHA256 hash. Overrides recipient locks and is accepted across all modes.
+                </p>
+                <div class="grid-form" style="gap:10px;">
+                    <div class="form-group">
+                        <label for="adminOtpTtl">Validity Window (TTL)</label>
+                        <select id="adminOtpTtl" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);">
+                            <option value="300" selected>5 Minutes (Standard Delivery)</option>
+                            <option value="900">15 Minutes (Extended Buffer)</option>
+                            <option value="1800">30 Minutes (Long Transit)</option>
+                            <option value="3600">1 Hour (Emergency Master Bypass)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminOtpRecipientContact">Recipient Contact Override (Optional)</label>
+                        <input type="text" id="adminOtpRecipientContact" placeholder="e.g. 9822011101 or recipient email">
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+                        <button type="button" class="primary-btn" onclick="generateAdminOtp()">🔐 Generate Admin Access OTP</button>
+                        <button type="button" class="small-btn" onclick="markAdminTransportDelivered()">✓ Confirm Delivery</button>
+                    </div>
+                </div>
+                <div id="adminOtpDisplayBox" style="margin-top:14px;"></div>
+            </div>
+
+            <!-- Cross-Mode Verification & ESP32 Hardware Bridge Card -->
+            <div class="panel-card" style="border:1px dashed #d97706;background:#fffdf7;">
+                <span class="section-label" style="color:#b45309;">CROSS-MODE VERIFICATION &amp; ESP32 BRIDGE</span>
+                <h3>Test Verify in Any Mode</h3>
+                <p style="font-size:13px;color:var(--muted);margin:6px 0 12px;">
+                    Verify the Admin-generated OTP in simulator mode or trigger physical unlock on the ESP32 Box (Servo Pin 18, Reed Pin 27).
+                </p>
+
+                <!-- Physical ESP32 Box Connection Bridge -->
+                <div style="background:#fff;border:1px solid #fed7aa;border-radius:8px;padding:12px;margin-bottom:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
+                        <strong style="font-size:13px;color:#9a3412;">⚡ Physical ESP32 Device Connection</strong>
+                        <span id="adminEsp32ConnBadge" class="status limited" style="font-size:11px;">STANDALONE</span>
+                    </div>
+                    <div class="grid-form" style="gap:8px;">
+                        <div class="form-group" style="grid-column:1/-1;">
+                            <label for="adminEsp32BoxUrl" style="font-size:12px;">ESP32 Box URL / IP (from Serial Monitor):</label>
+                            <div style="display:flex;gap:8px;">
+                                <input type="text" id="adminEsp32BoxUrl" placeholder="http://192.168.1.100" style="font-family:monospace;font-size:13px;" onchange="saveAdminEsp32Url()">
+                                <button type="button" class="small-btn" onclick="checkAdminPhysicalStatus()">📡 Status</button>
+                                <button type="button" class="primary-btn" style="background:#087f5b;padding:6px 12px;" onclick="unlockAdminPhysicalBox()">🔓 Unlock Box</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="adminEsp32StatusMeta" style="margin-top:6px;font-size:12px;font-weight:600;color:#102a27;"></div>
+                </div>
+
+                <!-- Keypad Simulator Verification -->
+                <div class="grid-form" style="gap:10px;">
+                    <div class="form-group">
+                        <label for="adminSimOtpInput">Keypad OTP Entry (6 digits)</label>
+                        <input type="text" id="adminSimOtpInput" maxlength="6" placeholder="Enter 6-digit OTP">
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:flex-end;">
+                        <button type="button" class="primary-btn" onclick="verifyAdminSimKeypad()">Verify Keypad OTP</button>
+                    </div>
+                    <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" class="small-btn" onclick="simulateAdminDoorEvent('door_opened')">🚪 Reed Switch: Door Opened</button>
+                        <button type="button" class="small-btn" onclick="simulateAdminDoorEvent('door_closed')">🔒 Reed Switch: Door Closed</button>
+                    </div>
+                </div>
+                <div id="adminSimFeedback" style="margin-top:10px;font-size:13px;font-weight:600;"></div>
+            </div>
+        </div>
+
+        <div class="panel-card">
+            <span class="section-label">SHIPMENT AUDIT TRAIL</span>
+            <h3 style="margin-bottom:10px;">Door Access, Lockout &amp; OTP Logs for Selected Transport</h3>
+            <div id="adminTransportLogsList" class="stack-list"></div>
+        </div>
     </section>
 
     <section id="admin-tab-blood" class="admin-tab-panel" style="display:none;">

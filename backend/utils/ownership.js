@@ -11,15 +11,48 @@ export function getUserBloodBank(db, userId) {
 export function canAccessTransport(db, user, transport) {
   if (!user || !transport) return false;
   if (user.role === "admin") return true;
-  if (transport.recipient_user_id && transport.recipient_user_id === user.id) return true;
+
+  const userId = Number(user.id);
+
+  if (transport.recipient_user_id != null && Number(transport.recipient_user_id) === userId) {
+    return true;
+  }
+
   if (user.role === "hospital") {
     const hosp = getUserHospital(db, user.id);
-    return Boolean(hosp && transport.destination_hospital_id === hosp.id);
+    if (hosp && transport.destination_hospital_id != null && Number(transport.destination_hospital_id) === Number(hosp.id)) {
+      return true;
+    }
+    // Also verify if this hospital created the blood request associated with the transport
+    if (transport.blood_request_id) {
+      const br = db.queryOne("SELECT requester_hospital_id, requester_user_id FROM blood_requests WHERE id = ?", [transport.blood_request_id]);
+      if (br) {
+        if (br.requester_user_id != null && Number(br.requester_user_id) === userId) return true;
+        if (hosp && br.requester_hospital_id != null && Number(br.requester_hospital_id) === Number(hosp.id)) return true;
+      }
+    }
+    return false;
   }
+
   if (user.role === "blood_bank") {
     const bank = getUserBloodBank(db, user.id);
-    return Boolean(bank && transport.origin_blood_bank_id === bank.id);
+    if (bank && transport.origin_blood_bank_id != null && Number(transport.origin_blood_bank_id) === Number(bank.id)) {
+      return true;
+    }
+    if (transport.blood_request_id) {
+      const br = db.queryOne("SELECT blood_bank_id FROM blood_requests WHERE id = ?", [transport.blood_request_id]);
+      if (br && bank && Number(br.blood_bank_id) === Number(bank.id)) return true;
+    }
+    return false;
   }
+
+  if (user.role === "patient") {
+    if (transport.blood_request_id) {
+      const br = db.queryOne("SELECT requester_user_id FROM blood_requests WHERE id = ?", [transport.blood_request_id]);
+      if (br && Number(br.requester_user_id) === userId) return true;
+    }
+  }
+
   return false;
 }
 

@@ -53,9 +53,10 @@ export class SqliteAdapter {
   }
 
   queryAll(sql, params = []) {
+    const safeParams = params.map((p) => (p === undefined ? null : p));
     const stmt = this.db.prepare(sql);
     try {
-      stmt.bind(params);
+      stmt.bind(safeParams);
       const rows = [];
       while (stmt.step()) {
         rows.push(stmt.getAsObject());
@@ -72,9 +73,10 @@ export class SqliteAdapter {
   }
 
   execute(sql, params = []) {
+    const safeParams = params.map((p) => (p === undefined ? null : p));
     const stmt = this.db.prepare(sql);
     try {
-      stmt.bind(params);
+      stmt.bind(safeParams);
       stmt.step();
     } finally {
       stmt.free();

@@ -536,22 +536,75 @@ async function selectTransport(transportId) {
 }
 
 async function generateTransportOtp() {
-  if (!selectedTransport) return;
+  const box = document.getElementById("otpDisplayBox");
+  if (!selectedTransport) {
+    const msg = "Please select an active blood shipment from the transport list first.";
+    setFeedback(msg, true);
+    if (box) {
+      box.innerHTML = `<div class="feedback-banner error" style="margin-top:8px;">⚠️ ${esc(msg)}</div>`;
+    }
+    return;
+  }
+
+  if (["delivered", "cancelled"].includes(selectedTransport.status)) {
+    const msg = `Cannot generate OTP: Transport is already ${selectedTransport.status}.`;
+    setFeedback(msg, true);
+    if (box) {
+      box.innerHTML = `<div class="feedback-banner error" style="margin-top:8px;">⚠️ ${esc(msg)}</div>`;
+    }
+    return;
+  }
+
+  if (box) {
+    box.innerHTML = `<div class="feedback-banner info" style="margin-top:8px;">⏳ Generating single-use cryptographic OTP...</div>`;
+  }
+
   try {
     const res = await window.medtrackApi.request("/otp/generate", {
       method: "POST",
-      body: JSON.stringify({ transportId: selectedTransport.id })
+      body: JSON.stringify({ transportId: Number(selectedTransport.id) })
     });
-    const box = document.getElementById("otpDisplayBox");
-    box.innerHTML = `
-      <div class="feedback-banner success">
-        OTP dispatched to ${esc(res.recipientContact)} (expires in ${Number(res.ttlSeconds)}s).
-        ${res.simulationOtpPreview ? `<br><strong>Dev Notification Preview OTP:</strong> <code>${esc(res.simulationOtpPreview)}</code>` : ""}
-      </div>
-    `;
+
+    const ttl = Number(res.ttlSeconds) || 300;
+    const recipient = res.recipientContact || selectedTransport.recipient_contact || "Designated recipient";
+    const previewOtp = res.simulationOtpPreview || "";
+
+    if (box) {
+      box.innerHTML = `
+        <div class="feedback-banner success" style="margin-top:8px;padding:12px;border-left:4px solid #087f5b;">
+          <div style="font-weight:700;font-size:14px;color:#087f5b;margin-bottom:4px;">
+            ✓ OTP Generated &amp; Dispatched Successfully
+          </div>
+          <p style="margin:4px 0;font-size:13px;">
+            Single-use OTP dispatched to <strong>${esc(recipient)}</strong> (expires in <strong>${ttl}s</strong>).
+          </p>
+          ${previewOtp ? `
+            <div style="margin-top:8px;background:#fef9c3;padding:8px 12px;border-radius:6px;border:1px solid #fde047;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+              <div>
+                <span style="font-size:11px;text-transform:uppercase;color:#854d0e;font-weight:700;">Single-Use OTP Code:</span><br>
+                <code style="font-size:22px;font-weight:800;letter-spacing:4px;color:#713f12;">${esc(previewOtp)}</code>
+              </div>
+              <button type="button" class="small-btn" onclick="navigator.clipboard?.writeText('${esc(previewOtp)}'); this.textContent='✓ Copied!';" style="margin:0;">Copy OTP</button>
+            </div>
+          ` : ""}
+        </div>
+      `;
+    }
+
+    // Auto-fill simulator keypad input
+    const simInput = document.getElementById("simOtpInput");
+    if (simInput && previewOtp) {
+      simInput.value = previewOtp;
+    }
+
+    setFeedback(`OTP generated for transport ${selectedTransport.transport_code || selectedTransport.id}.`);
     await selectTransport(selectedTransport.id);
   } catch (err) {
-    setFeedback(err.message, true);
+    const errMsg = err.message || "Failed to generate OTP.";
+    setFeedback(errMsg, true);
+    if (box) {
+      box.innerHTML = `<div class="feedback-banner error" style="margin-top:8px;">⚠️ OTP Generation Failed: ${esc(errMsg)}</div>`;
+    }
   }
 }
 
@@ -590,10 +643,126 @@ async function simulateTemperature(sensorError) {
   }
 }
 
+function getEsp32Url() {
+  const input = document.getElementById("esp32BoxUrl");
+  let url = input?.value.trim() || localStorage.getItem("medtrack_esp32_url") || "";
+  if (url && !url.startsWith("http://") && !url.startsWith("https://")) {
+    url = `http://${url}`;
+  }
+  return url.replace(/\/+$/, "");
+}
+
+function saveEsp32Url() {
+  const url = getEsp32Url();
+  if (url) {
+    localStorage.setItem("medtrack_esp32_url", url);
+  }
+}
+
+async function checkPhysicalStatus() {
+  const meta = document.getElementById("esp32StatusMeta");
+  const badge = document.getElementById("esp32ConnBadge");
+  const url = getEsp32Url();
+  if (!url) {
+    if (meta) meta.innerHTML = `<span style="color:#dc2626;">Please enter your ESP32 Box IP/URL first (e.g. http://192.168.1.100).</span>`;
+    return;
+  }
+  saveEsp32Url();
+  if (meta) meta.innerHTML = `<span>Checking status at ${esc(url)}/status...</span>`;
+
+  try {
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 4000);
+    const resp = await fetch(`${url}/status`, { signal: ctrl.signal });
+    clearTimeout(timeout);
+
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    if (badge) {
+      badge.textContent = "CONNECTED";
+      badge.className = "status available";
+    }
+
+    const lockedStr = data.locked ? "🔒 LOCKED (0°)" : "🟢 UNLOCKED (90°)";
+    const lidStr = data.lid_closed ? "Lid: CLOSED (Reed LOW)" : "⚠️ Lid: OPEN (Reed HIGH)";
+
+    if (meta) {
+      meta.innerHTML = `
+        <span style="color:#087f5b;">
+          ✓ ESP32 Online (${esc(data.ip || url)}) • Servo: <strong>${esc(lockedStr)}</strong> • <strong>${esc(lidStr)}</strong>
+        </span>
+      `;
+    }
+  } catch (err) {
+    if (badge) {
+      badge.textContent = "STANDALONE";
+      badge.className = "status limited";
+    }
+    if (meta) {
+      meta.innerHTML = `
+        <span style="color:#b45309;">
+          ⚠️ Unable to reach ESP32 at ${esc(url)} directly (${esc(err.message)}). Ensure your browser and ESP32 are on the same Wi-Fi.
+        </span>
+      `;
+    }
+  }
+}
+
+async function unlockPhysicalBox(customUrl = null, otp = "") {
+  const meta = document.getElementById("esp32StatusMeta");
+  const badge = document.getElementById("esp32ConnBadge");
+  const url = customUrl || getEsp32Url();
+  if (!url) {
+    if (meta) meta.innerHTML = `<span style="color:#dc2626;">Please enter the ESP32 Box IP/URL first (e.g. http://192.168.1.100).</span>`;
+    return;
+  }
+  saveEsp32Url();
+  if (meta) meta.innerHTML = `<span>Sending UNLOCK command to ESP32 on Pin 18...</span>`;
+
+  try {
+    const target = otp ? `${url}/unlock?otp=${encodeURIComponent(otp)}` : `${url}/unlock`;
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 4000);
+    const resp = await fetch(target, { signal: ctrl.signal });
+    clearTimeout(timeout);
+
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    await resp.json().catch(() => ({ status: "unlocked" }));
+
+    if (badge) {
+      badge.textContent = "UNLOCKED";
+      badge.className = "status available";
+    }
+    if (meta) {
+      meta.innerHTML = `
+        <span style="color:#087f5b;font-weight:700;">
+          🎉 Physical ESP32 Box UNLOCKED! Servo actuated to 90°. (Will auto-relock once lid is closed).
+        </span>
+      `;
+    }
+  } catch (err) {
+    if (meta) {
+      meta.innerHTML = `
+        <span style="color:#dc2626;">
+          ⚠️ Unlock signal failed: ${esc(err.message)}. Check ESP32 Wi-Fi and IP address.
+        </span>
+      `;
+    }
+  }
+}
+
 async function simulateKeypadVerify() {
   if (!selectedTransport) return;
   const fb = document.getElementById("simFeedback");
   const otp = document.getElementById("simOtpInput").value.trim();
+  if (!otp) {
+    if (fb) {
+      fb.style.color = "#dc2626";
+      fb.textContent = "Please enter a 6-digit OTP.";
+    }
+    return;
+  }
   try {
     const res = await window.medtrackApi.request("/otp/simulate-verify", {
       method: "POST",
@@ -602,6 +771,13 @@ async function simulateKeypadVerify() {
     lastSimUnlockToken = res.unlockToken;
     fb.style.color = "#087f5b";
     fb.textContent = `[SIMULATED] OTP Verified! Servo Latch UNLOCKED (token expires ${fmt(res.unlockExpiresAt)}).`;
+
+    // Also trigger physical ESP32 box if configured!
+    const esp32Url = getEsp32Url();
+    if (esp32Url) {
+      unlockPhysicalBox(esp32Url, otp);
+    }
+
     await selectTransport(selectedTransport.id);
   } catch (err) {
     fb.style.color = "#dc2626";
@@ -781,6 +957,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       setFeedback(err.message, true);
     }
   });
+
+  const savedUrl = localStorage.getItem("medtrack_esp32_url");
+  const esp32Input = document.getElementById("esp32BoxUrl");
+  if (savedUrl && esp32Input) {
+    esp32Input.value = savedUrl;
+  }
 });
 
 window.changeBed = changeBed;
@@ -793,3 +975,6 @@ window.simulateTemperature = simulateTemperature;
 window.simulateKeypadVerify = simulateKeypadVerify;
 window.simulateDoorEvent = simulateDoorEvent;
 window.simulateGpsMove = simulateGpsMove;
+window.checkPhysicalStatus = checkPhysicalStatus;
+window.unlockPhysicalBox = unlockPhysicalBox;
+window.saveEsp32Url = saveEsp32Url;
