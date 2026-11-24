@@ -206,11 +206,32 @@
             </div>
 
             <div class="panel-card" style="border:1px dashed #d97706;background:#fffdf7;">
-                <span class="section-label" style="color:#b45309;">DEV / TEST HARDWARE SIMULATOR</span>
-                <h3>Simulate ESP32 Box Events</h3>
+                <span class="section-label" style="color:#b45309;">ESP32 HARDWARE INTEGRATION &amp; SIMULATOR</span>
+                <h3>ESP32 Smart Transport Box Controls</h3>
                 <p style="font-size:13px;color:var(--muted);margin:6px 0 12px;">
-                    Clearly labeled simulation controls for testing without physical ESP32 hardware attached.
+                    Test and operate the physical ESP32 Box (Servo Latch Pin 18, Magnetic Reed Pin 27) or use simulated events.
                 </p>
+
+                <!-- Physical ESP32 Connection Bridge -->
+                <div style="background:#fff;border:1px solid #fed7aa;border-radius:8px;padding:12px;margin-bottom:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
+                        <strong style="font-size:13px;color:#9a3412;">⚡ Physical ESP32 Device Connection</strong>
+                        <span id="esp32ConnBadge" class="status limited" style="font-size:11px;">STANDALONE</span>
+                    </div>
+                    <div class="grid-form" style="gap:8px;">
+                        <div class="form-group" style="grid-column:1/-1;">
+                            <label for="esp32BoxUrl" style="font-size:12px;">ESP32 Box URL / IP (from Serial Monitor):</label>
+                            <div style="display:flex;gap:8px;">
+                                <input type="text" id="esp32BoxUrl" placeholder="http://192.168.1.100" style="font-family:monospace;font-size:13px;" onchange="saveEsp32Url()">
+                                <button type="button" class="small-btn" onclick="checkPhysicalStatus()">📡 Status</button>
+                                <button type="button" class="primary-btn" style="background:#087f5b;padding:6px 12px;" onclick="unlockPhysicalBox()">🔓 Unlock Box</button>
+                            </div>
+                            <small style="color:var(--muted);font-size:11px;">Connects directly to your ESP32 running WebServer on port 80 (Pin 18 Servo, Pin 27 Reed).</small>
+                        </div>
+                    </div>
+                    <div id="esp32StatusMeta" style="margin-top:6px;font-size:12px;font-weight:600;color:#102a27;"></div>
+                </div>
+
                 <div class="grid-form">
                     <div class="form-group">
                         <label for="simTempInput">Simulate Temp (°C)</label>

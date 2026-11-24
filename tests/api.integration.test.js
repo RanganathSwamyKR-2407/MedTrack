@@ -404,11 +404,11 @@ describe("MedTrack End-to-End API & Security Integration", () => {
     });
     assert.equal(badDeviceCall.status, 401);
 
-    // Generate OTP -> confirm plaintext OTP is not stored in DB
+    // Generate OTP -> confirm coercion of numeric string transportId and non-plaintext hash storage
     const otpGen = await api("/otp/generate", {
       method: "POST",
       token: hospitalLogin.data.token,
-      body: { transportId }
+      body: { transportId: String(transportId) }
     });
     assert.equal(otpGen.status, 201);
     const validOtp = otpGen.data.simulationOtpPreview;
@@ -458,6 +458,44 @@ describe("MedTrack End-to-End API & Security Integration", () => {
     });
     assert.equal(reuseAttempt.status, 400);
 
+    // Admin can generate master access OTP with custom TTL, accepted across all modes
+    const adminOtpGen = await api("/otp/generate", {
+      method: "POST",
+      token: adminLogin.data.token,
+      body: { transportId, ttlSeconds: 600 }
+    });
+    assert.equal(adminOtpGen.status, 201);
+    assert.equal(adminOtpGen.data.isAdminOverride, true);
+    const adminOtpCode = adminOtpGen.data.simulationOtpPreview;
+    assert.match(adminOtpCode, /^[0-9]{6}$/);
+
+    // Verify Admin OTP is accepted in Mode 2: Hospital Simulator Verification
+    const hospSimVerify = await api("/otp/simulate-verify", {
+      method: "POST",
+      token: hospitalLogin.data.token,
+      body: { transportId, otp: adminOtpCode }
+    });
+    assert.equal(hospSimVerify.status, 200);
+    assert.equal(hospSimVerify.data.unlockAuthorized, true);
+
+    // Reissue fresh Admin OTP and verify in Mode 1: Physical Hardware Device Keypad Verification
+    const adminOtpGen2 = await api("/otp/generate", {
+      method: "POST",
+      token: adminLogin.data.token,
+      body: { transportId, ttlSeconds: 900 }
+    });
+    assert.equal(adminOtpGen2.status, 201);
+    const adminOtpCode2 = adminOtpGen2.data.simulationOtpPreview;
+
+    const deviceVerifyAdminOtp = await api("/otp/verify", {
+      method: "POST",
+      deviceHeaders,
+      body: { transportId, otp: adminOtpCode2 }
+    });
+    assert.equal(deviceVerifyAdminOtp.status, 200);
+    assert.equal(deviceVerifyAdminOtp.data.unlockAuthorized, true);
+    assert.ok(deviceVerifyAdminOtp.data.unlockToken);
+
     // Door opened WITHOUT unlockToken MUST be logged as unauthorized_door_open!
     const noTokenDoorOpen = await api("/access/door-event", {
       method: "POST",
@@ -472,7 +510,7 @@ describe("MedTrack End-to-End API & Security Integration", () => {
     const doorOpen = await api("/access/door-event", {
       method: "POST",
       deviceHeaders,
-      body: { transportId, eventType: "door_opened", unlockToken: okVerify.data.unlockToken }
+      body: { transportId, eventType: "door_opened", unlockToken: deviceVerifyAdminOtp.data.unlockToken }
     });
     assert.equal(doorOpen.status, 201);
     assert.equal(doorOpen.data.recordedEventType, "door_opened");
